@@ -1,18 +1,17 @@
 #pragma once
 
+#include <functional>
+#include <memory>
+#include <schedulers/timer/timer.hpp>
+#include <schedulers/view/view.hpp>
+#include <thread>
 #include <utils/func.hpp>
 #include "coroutine.hpp"
 
-#include <memory>
-#include <schedulers/view/view.hpp>
-#include <schedulers/timer/timer.hpp>
-#include <functional>
-#include <thread>
-
 namespace vthread {
 
-  class VThread final : public schedulers::timer::TimerBase {
-  public:
+class VThread final : public schedulers::timer::TimerBase {
+public:
     VThread(schedulers::View view, Func func);
 
     ~VThread() = default;
@@ -20,20 +19,20 @@ namespace vthread {
     void Run() noexcept override;
 
     template <typename Awaiter>
-    void Await(Awaiter& awaiter) {
-      await_suspend_ = [&](VThread* vthread) {
-        awaiter.await_suspend(vthread);
-      };
-      coro_.Suspend();
+    void Await(Awaiter &awaiter) {
+        await_suspend_ = [&](VThread *vthread) {
+            awaiter.await_suspend(vthread);
+        };
+        coro_.Suspend();
     }
 
-    static VThread& Self();
+    static VThread &Self();
     schedulers::View CurrentView() const;
 
-  private:
+private:
     schedulers::View view_;
     Coroutine coro_;
-    std::function<void(VThread*)> await_suspend_;
-  };
+    std::function<void(VThread *)> await_suspend_;
+};
 
 }  // namespace vthread

@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
-#include <schedulers/schedule_context/schedule_context.hpp>
 #include <async/run.hpp>
-#include <async/yield.hpp>
 #include <async/sleep_for.hpp>
-#include <sync/mutex.hpp>
-#include <sync/event.hpp>
-#include <sync/conditional_variable.hpp>
+#include <async/yield.hpp>
 #include <atomic>
-#include <vector>
 #include <chrono>
+#include <schedulers/schedule_context/schedule_context.hpp>
+#include <sync/conditional_variable.hpp>
+#include <sync/event.hpp>
+#include <sync/mutex.hpp>
+#include <vector>
 
 using namespace std::chrono_literals;
 
@@ -18,9 +18,7 @@ TEST(VThreads, SimpleTask) {
 
     std::atomic<int> x = 0;
 
-    async::Run(sched, [&]() {
-        x = 1;
-    });
+    async::Run(sched, [&]() { x = 1; });
 
     sched.Stop();
     ASSERT_EQ(x, 1);
@@ -33,9 +31,7 @@ TEST(VThreads, MultipleTasks) {
     std::atomic<int> counter = 0;
 
     for (int i = 0; i < 3; ++i) {
-        async::Run(sched, [&]() {
-            counter++;
-        });
+        async::Run(sched, [&]() { counter++; });
     }
 
     sched.Stop();
@@ -52,9 +48,7 @@ TEST(VThreads, NestedRun) {
         counter++;
         async::Run([&]() {
             counter++;
-            async::Run([&]() {
-                counter++;
-            });
+            async::Run([&]() { counter++; });
         });
     });
 
@@ -90,7 +84,7 @@ TEST(VThreads, YieldInterleaving) {
     ASSERT_EQ(execution_order.size(), ITERS * 2);
     bool interleaved = false;
     for (std::size_t i = 0; i < execution_order.size() - 1; ++i) {
-        if (execution_order[i] != execution_order[i+1]) {
+        if (execution_order[i] != execution_order[i + 1]) {
             interleaved = true;
             break;
         }
@@ -111,7 +105,7 @@ TEST(VThreads, SleepFor) {
         sleep_flag.store(true);
     });
 
-    while(!sleep_flag.load()) {
+    while (!sleep_flag.load()) {
         std::this_thread::yield();
     }
     sched.Stop();
@@ -162,7 +156,7 @@ TEST(VThreads, Event) {
     });
 
     while (!sleep_flag.load()) {
-      std::this_thread::yield();
+        std::this_thread::yield();
     }
     sched.Stop();
 
@@ -198,7 +192,7 @@ TEST(VThreads, CondVarNotifyOne) {
     });
 
     while (!ready) {
-      std::this_thread::yield();
+        std::this_thread::yield();
     }
     sched.Stop();
 

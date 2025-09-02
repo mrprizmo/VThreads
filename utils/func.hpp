@@ -4,6 +4,6 @@
 
 namespace vthread {
 
-	using Func = std::function<void()>;
+using Func = std::function<void()>;
 
 }  // namespace vthread

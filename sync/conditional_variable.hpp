@@ -1,12 +1,12 @@
 #pragma once
 
+#include <atomic>
+#include <intrusive/list.hpp>
+#include <mutex>
+#include <schedulers/schedule_task.hpp>
 #include <sync/mutex.hpp>
 #include <thread/spinlock.hpp>
 #include <vthread/vthread.hpp>
-#include <schedulers/schedule_task.hpp>
-#include <intrusive/list.hpp>
-#include <atomic>
-#include <mutex>
 
 namespace syncr {
 
@@ -14,25 +14,25 @@ class ConditionalVariable {
 private:
     class CondVarAwaiter {
     public:
-        CondVarAwaiter(ConditionalVariable& cv)
-            : cv_(cv) {}
+        CondVarAwaiter(ConditionalVariable &cv) : cv_(cv) {
+        }
 
-        void await_suspend(vthread::VThread* self) {
+        void await_suspend(vthread::VThread *self) {
             cv_.waiters_.PushBack(self);
             cv_.wait_lock_.unlock();
         }
 
     private:
-        ConditionalVariable& cv_;
+        ConditionalVariable &cv_;
     };
 
 public:
     ConditionalVariable() = default;
 
-    ConditionalVariable(const ConditionalVariable&) = delete;
-    ConditionalVariable& operator=(const ConditionalVariable&) = delete;
+    ConditionalVariable(const ConditionalVariable &) = delete;
+    ConditionalVariable &operator=(const ConditionalVariable &) = delete;
 
-    void Wait(Mutex& mutex) {
+    void Wait(Mutex &mutex) {
         uint64_t current_seq = sequence_.load(std::memory_order_acquire);
 
         mutex.unlock();
@@ -53,14 +53,14 @@ public:
     }
 
     void NotifyOne() {
-        vthread::VThread* to_wake = nullptr;
+        vthread::VThread *to_wake = nullptr;
 
         sequence_.fetch_add(1, std::memory_order_acq_rel);
 
         if (counter_.load(std::memory_order_acquire) > 0) {
             std::lock_guard guard(wait_lock_);
             if (!waiters_.IsEmpty()) {
-                to_wake = static_cast<vthread::VThread*>(&waiters_.Front());
+                to_wake = static_cast<vthread::VThread *>(&waiters_.Front());
                 waiters_.PopFront();
             }
         }
@@ -78,8 +78,8 @@ public:
         if (counter_.load(std::memory_order_acquire) > 0) {
             std::lock_guard guard(wait_lock_);
 
-            while(!waiters_.IsEmpty()) {
-                auto* waiter = &waiters_.Front();
+            while (!waiters_.IsEmpty()) {
+                auto *waiter = &waiters_.Front();
                 waiters_.PopFront();
                 waking_waiters.PushBack(waiter);
             }
@@ -90,10 +90,12 @@ public:
         }
 
         auto view = vthread::VThread::Self().CurrentView();
-        while(!waking_waiters.IsEmpty()) {
-            auto* waiter = &waking_waiters.Front();
+        while (!waking_waiters.IsEmpty()) {
+            auto *waiter = &waking_waiters.Front();
             waking_waiters.PopFront();
-            schedulers::ScheduleTask(view, static_cast<vthread::VThread*>(waiter));
+            schedulers::ScheduleTask(
+                view, static_cast<vthread::VThread *>(waiter)
+            );
         }
     }
 
@@ -103,4 +105,4 @@ private:
     std::atomic<uint64_t> sequence_{0}, counter_{0};
 };
 
-} // namespace syncr
+}  // namespace syncr

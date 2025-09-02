@@ -1,11 +1,11 @@
 #pragma once
 
-#include <utils/func.hpp>
 #include <schedulers/view/view.hpp>
+#include <utils/func.hpp>
 
 namespace async {
 
-	void Run(schedulers::View view, vthread::Func func);
-	void Run(vthread::Func func);
+void Run(schedulers::View view, vthread::Func func);
+void Run(vthread::Func func);
 
 }  // namespace async

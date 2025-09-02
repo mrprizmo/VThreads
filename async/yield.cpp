@@ -3,9 +3,9 @@
 
 namespace async {
 
-  void Yield() {
+void Yield() {
     auto awaiter = YieldAwaiter();
     vthread::VThread::Self().Await(awaiter);
-  }
+}
 
 }  // namespace async
